@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nay Chi Phyo - Senior Business Analyst</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals & Muted Blue -->
+    <!-- Application Structure Plan: The SPA is structured as a single-page digital resume with a sticky top navigation bar for quick access to thematic sections: About, Skills, Experience, and Contact. This non-linear structure is ideal for recruiters who need to quickly find specific information. The 'Skills' section is designed as an interactive dashboard, using a radar chart for a quick visual assessment of technical capabilities and detailed cards for soft skills. The 'Experience' section employs a visual timeline to showcase career progression across different tech domains, which is more engaging than a simple list. This design prioritizes user engagement and rapid information synthesis. A new 'Resume Assistant' section has been added to demonstrate communication skills by using a large language model to professionally summarize user-provided text. -->
+    <!-- Visualization & Content Choices: 
+        - Hero Section: Report Info (Name, Title, Tagline) -> Goal (Inform) -> Method (Large, clean typography) -> Interaction (None) -> Justification (Strong, professional first impression).
+        - Technical Skills: Report Info (Technical Skills List) -> Goal (Compare/Organize) -> Viz (Radar Chart) -> Interaction (Hover tooltips for proficiency) -> Justification (Provides a quick, holistic view of technical strengths across categories) -> Library (Chart.js on Canvas).
+        - Soft Skills: Report Info (Soft Skills List with descriptions) -> Goal (Inform/Detail) -> Method (Styled Cards with full descriptions) -> Interaction (Hover effects) -> Justification (Clear, organized presentation for qualitative data with necessary detail).
+        - Career Journey: Report Info (Experience in various domains) -> Goal (Show Change/Progression) -> Method (Vertical Timeline) -> Interaction (Visual flow, hover effects) -> Justification (Tells a story of professional growth more effectively than a static list) -> Library (HTML/CSS).
+        - Resume Assistant: Report Info (Project descriptions) -> Goal (Demonstrate skill) -> Method (Text area, button, and dynamic output) -> Interaction (User provides input and triggers text generation via API) -> Justification (Provides a tangible, interactive demonstration of professional communication and analysis skills) -> Library (Gemini API).
+        - Contact: Report Info (Email, LinkedIn, WhatsApp) -> Goal (Enable Action) -> Method (Clickable Icons) -> Interaction (Click to contact/view) -> Justification (Standard and effective call-to-action).
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFDFB;
+            color: #333D44;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 45vh;
+            max-height: 450px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .nav-link {
+            transition: color 0.3s;
+        }
+        .nav-link:hover {
+            color: #4A90E2;
+        }
+        .skill-card, .timeline-item {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .skill-card:hover, .timeline-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .timeline:before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #D1D5DB;
+        }
+        @media (min-width: 768px) {
+            .timeline:before {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            .timeline-item {
+                width: calc(50% - 2rem);
+            }
+            .timeline-item:nth-child(odd) {
+                align-self: flex-start;
+            }
+            .timeline-item:nth-child(even) {
+                align-self: flex-end;
+            }
+             .timeline-item:nth-child(odd):after {
+                content: '';
+                position: absolute;
+                right: -0.5rem;
+                top: 1.25rem;
+                height: 1rem;
+                width: 1rem;
+                background: white;
+                border: 2px solid #4A90E2;
+                border-radius: 9999px;
+                transform: translateX(50%);
+            }
+            .timeline-item:nth-child(even):after {
+                content: '';
+                position: absolute;
+                left: -0.5rem;
+                top: 1.25rem;
+                height: 1rem;
+                width: 1rem;
+                background: white;
+                border: 2px solid #4A90E2;
+                border-radius: 9999px;
+                transform: translateX(-50%);
+            }
+        }
+        @media (max-width: 767px) {
+            .timeline:before {
+                left: 1rem;
+            }
+            .timeline-item {
+                width: calc(100% - 3rem);
+                margin-left: 3rem;
+                align-self: flex-end;
+            }
+            .timeline-item:after {
+                 content: '';
+                position: absolute;
+                left: -2.5rem;
+                top: 1.25rem;
+                height: 1rem;
+                width: 1rem;
+                background: white;
+                border: 2px solid #4A90E2;
+                border-radius: 9999px;
+                transform: translateX(-50%);
+            }
+        }
+         @keyframes spinner {
+            to {transform: rotate(360deg);}
+        }
+        .spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            vertical-align: text-bottom;
+            border: .25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            -webkit-animation: spinner .75s linear infinite;
+            animation: spinner .75s linear infinite;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-xl font-bold text-gray-800">
+                <a href="#">Nay Chi Phyo</a>
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#about" class="nav-link text-gray-600">About</a>
+                <a href="#skills" class="nav-link text-gray-600">Skills</a>
+                <a href="#experience" class="nav-link text-gray-600">Experience</a>
+                <a href="#contact" class="nav-link text-gray-600">Contact</a>
+            </div>
+             <button id="mobile-menu-button" class="md:hidden flex items-center p-2">
+                <span class="text-2xl">☰</span>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#about" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">About</a>
+            <a href="#skills" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Skills</a>
+            <a href="#experience" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Experience</a>
+            <a href="#contact" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Contact</a>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="py-20 md:py-32">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-4xl md:text-6xl font-bold text-gray-800 leading-tight">Nay Chi Phyo</h1>
+                <h2 class="text-2xl md:text-3xl text-gray-600 mt-4">Senior Business Analyst specializing in Financial Technology</h2>
+                <p class="text-lg text-gray-500 mt-6 max-w-2xl mx-auto">A highly motivated Senior Business Analyst with a passion for tackling complex challenges.</p>
+            </div>
+        </section>
+
+        <section id="about" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">About Me</h2>
+                    <div class="w-24 h-1 bg-[#4A90E2] mx-auto mt-4"></div>
+                </div>
+                <div class="max-w-3xl mx-auto text-center text-gray-600 text-lg leading-relaxed">
+                   <p>A Business Analyst with 7 years of experience across eCommerce, InsurTech (General & Life Insurance), and FinTech domains. Proven record of issue resolution, customer satisfaction improvements, and operational efficiency. Enjoys collaborative teamwork and continuous learning, with a passion for travel and social engagement.</p>
+                </div>
+            </div>
+        </section>
+
+<!--
+        <section id="assistant" class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">✨ Resume Assistant</h2>
+                    <p class="text-gray-500 mt-2">Describe a project and let the AI generate a professional summary.</p>
+                    <div class="w-24 h-1 bg-[#4A90E2] mx-auto mt-4"></div>
+                </div>
+                <div class="max-w-3xl mx-auto">
+                    <textarea id="project-description" class="w-full h-32 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4A90E2]" placeholder="e.g., Led a cross-functional team to reduce customer support tickets by 15% through a new self-service portal..."></textarea>
+                    <div class="flex justify-end mt-4">
+                        <button id="generate-summary-button" class="bg-[#4A90E2] text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-300">
+                            Summarize
+                        </button>
+                    </div>
+                    <div id="loading-indicator" class="hidden text-center mt-6">
+                        <div class="spinner text-[#4A90E2]"></div>
+                        <p class="text-gray-500 text-sm mt-2">Generating summary...</p>
+                    </div>
+                    <div id="summary-output" class="bg-gray-100 p-6 rounded-lg mt-6 hidden">
+                        <h3 class="font-bold text-lg mb-2">Professional Summary:</h3>
+                        <p id="summary-text" class="text-gray-700 leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+        </section> 
+-->
+
+        <section id="skills" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold">Skills & Expertise</h2>
+                    <p class="text-gray-500 mt-2">A comprehensive look at my technical and professional capabilities.</p>
+                    <div class="w-24 h-1 bg-[#4A90E2] mx-auto mt-4"></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+                    <div class="w-full">
+                        <h3 class="text-2xl font-semibold mb-6 text-center">Technical Skills</h3>
+                        <div class="chart-container">
+                            <canvas id="skillsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="w-full">
+                        <h3 class="text-2xl font-semibold mb-6 text-center">Soft Skills</h3>
+                        <div class="space-y-4">
+                            <div class="skill-card bg-gray-50 p-4 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg">Business Consulting</h4>
+                                <p class="text-gray-600 text-sm mt-1">Applying expertise to guide clients and stakeholders toward optimal solutions.</p>
+                            </div>
+                            <div class="skill-card bg-gray-50 p-4 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg">Communication</h4>
+                                <p class="text-gray-600 text-sm mt-1">Excellent verbal and written communication skills to effectively bridge the gap between technical and business teams.</p>
+                            </div>
+		<!-- New card for CRM experience -->
+                            <div class="skill-card bg-gray-50 p-4 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg">CRM Solutions</h4>
+                                <p class="text-gray-600 text-sm mt-1">Specialized in implementing and optimizing CRM platforms to streamline sales, marketing, and customer service operations.</p>
+                            </div>
+                             <div class="skill-card bg-gray-50 p-4 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg">Teamwork & Collaboration</h4>
+                                 <p class="text-gray-600 text-sm mt-1">Fostering a cohesive team environment to achieve shared goals efficiently.</p>
+                            </div>
+                             <div class="skill-card bg-gray-50 p-4 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg">Problem-Solving</h4>
+                                 <p class="text-gray-600 text-sm mt-1">Employing a structured approach to analyze issues and develop practical solutions.</p>
+                            </div>
+                             <div class="skill-card bg-gray-50 p-4 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg">Data Analysis & QA</h4>
+                                <p class="text-gray-600 text-sm mt-1">Interpreting complex data sets for insights and ensuring system integrity through rigorous testing.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="experience" class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold">Professional Journey</h2>
+                    <p class="text-gray-500 mt-2">A timeline of my 7 years of experience across key technology domains.</p>
+                    <div class="w-24 h-1 bg-[#4A90E2] mx-auto mt-4"></div>
+                </div>
+                <div class="relative flex flex-col items-center timeline">
+                    <div class="timeline-item relative mb-8 flex flex-col items-start p-6 bg-white rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-xl mb-2 text-gray-800">InsurTech (General & Life)</h3>
+                        <p class="text-gray-600">Worked extensively in the insurance technology space, contributing to both general and life insurance platforms to improve user experience and operational workflows.</p>
+                    </div>
+                    <div class="timeline-item relative mb-8 flex flex-col items-start p-6 bg-white rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-xl mb-2 text-gray-800">FinTech</h3>
+                        <p class="text-gray-600">Engaged in projects within the financial technology sector, focusing on process optimization and system analysis to support modern financial services.</p>
+                    </div>
+                    <div class="timeline-item relative mb-8 flex flex-col items-start p-6 bg-white rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-xl mb-2 text-gray-800">eCommerce</h3>
+                        <p class="text-gray-600">Gained foundational and advanced experience in the eCommerce domain, analyzing business requirements to deliver robust online retail solutions.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="interests" class="py-20 bg-white">
+             <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">Interests & Hobbies</h2>
+                    <div class="w-24 h-1 bg-[#4A90E2] mx-auto mt-4"></div>
+                </div>
+                <div class="flex flex-wrap justify-center gap-8 md:gap-16">
+                    <div class="text-center transform hover:scale-110 transition-transform">
+                        <div class="text-5xl mb-2">✈️</div>
+                        <p class="font-semibold text-lg">Exploring Cultures</p>
+                    </div>
+                    <div class="text-center transform hover:scale-110 transition-transform">
+                        <div class="text-5xl mb-2">📚</div>
+                        <p class="font-semibold text-lg">Avid Reader</p>
+                    </div>
+                    <div class="text-center transform hover:scale-110 transition-transform">
+                        <div class="text-5xl mb-2">🌊</div>
+                        <p class="font-semibold text-lg">Ocean Activities</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer id="contact" class="bg-gray-800 text-white py-12">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-2xl font-bold">Get In Touch</h2>
+                <p class="mt-4 mb-8 max-w-lg mx-auto">I'm always open to discussing new opportunities and challenges. Feel free to reach out through your preferred channel.</p>
+                <div class="flex justify-center items-center space-x-6">
+                    <a href="mailto:naychi306970@gmail.com" title="Email" class="text-gray-300 hover:text-white transition-colors duration-300 text-3xl">
+                        &#9993;
+                    </a>
+                    <a href="https://www.linkedin.com/in/nay-chi-phyo-132164175/" title="LinkedIn" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-white transition-colors duration-300 text-3xl">
+                        <span class="font-bold">in</span>
+                    </a>
+                </div>
+                 <p class="text-gray-500 text-sm mt-8">&copy; 2025 Nay Chi Phyo. All Rights Reserved.</p>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('skillsChart');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const generateButton = document.getElementById('generate-summary-button');
+            const projectDescription = document.getElementById('project-description');
+            const summaryOutput = document.getElementById('summary-output');
+            const summaryText = document.getElementById('summary-text');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: [
+                            'Programming (C#, JS, SQL)', 
+                            'Frameworks (Odoo, Salesforce)', 
+                            'BI & Cloud (Power BI, Azure)', 
+                            'Design (Figma, Visio, draw.io)', 
+                            'Mgt Tools (Jira, MS Project)'
+                        ],
+                        datasets: [{
+                            label: 'Proficiency',
+                            data: [8, 9, 8, 8, 9],
+                            fill: true,
+                            backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                            borderColor: 'rgb(74, 144, 226)',
+                            pointBackgroundColor: 'rgb(74, 144, 226)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(74, 144, 226)'
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        elements: {
+                            line: {
+                                borderWidth: 2
+                            }
+                        },
+                        scales: {
+                            r: {
+                                angleLines: {
+                                    display: true
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: 10,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                pointLabels: {
+                                    font: {
+                                        size: 12,
+                                        family: "'Inter', sans-serif"
+                                    },
+                                    color: '#333D44'
+                                },
+                                ticks: {
+                                    display: false,
+                                    stepSize: 2
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                             tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.r !== null) {
+                                            label += context.parsed.r + ' / 10';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            document.querySelectorAll('#mobile-menu a, .hidden.md\\:flex a').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    if (this.getAttribute('href').startsWith('#')) {
+                        e.preventDefault();
+                        if(!mobileMenu.classList.contains('hidden')){
+                           mobileMenu.classList.add('hidden');
+                        }
+                        document.querySelector(this.getAttribute('href')).scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            generateButton.addEventListener('click', async () => {
+                const description = projectDescription.value.trim();
+                if (!description) return;
+
+                loadingIndicator.classList.remove('hidden');
+                summaryOutput.classList.add('hidden');
+
+                const systemPrompt = "You are a world-class professional resume builder. Your task is to take a raw description of a project or task and transform it into a concise, impactful, and professionally-worded resume bullet point or short paragraph. Focus on quantifiable results and key skills. The output should be a single, well-formatted paragraph.";
+                const userQuery = `Convert the following project description into a professional resume summary: "${description}"`;
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                let retries = 0;
+                const maxRetries = 3;
+                let response;
+
+                while (retries < maxRetries) {
+                    try {
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (response.ok) {
+                            break;
+                        } else if (response.status === 429) {
+                            retries++;
+                            const delay = Math.pow(2, retries) * 1000;
+                            await new Promise(res => setTimeout(res, delay));
+                        } else {
+                            throw new Error(`API returned status code: ${response.status}`);
+                        }
+                    } catch (error) {
+                        console.error('Fetch error:', error);
+                        retries++;
+                        if (retries >= maxRetries) {
+                            summaryText.textContent = 'Failed to generate summary. Please try again later.';
+                            summaryOutput.classList.remove('hidden');
+                            loadingIndicator.classList.add('hidden');
+                            return;
+                        }
+                    }
+                }
+
+                if (!response || !response.ok) {
+                    summaryText.textContent = 'Failed to generate summary after multiple retries. Please check your network connection and try again.';
+                    summaryOutput.classList.remove('hidden');
+                    loadingIndicator.classList.add('hidden');
+                    return;
+                }
+
+                const result = await response.json();
+                const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (generatedText) {
+                    summaryText.textContent = generatedText;
+                } else {
+                    summaryText.textContent = 'Could not generate a summary. The model may have returned an empty response.';
+                }
+
+                loadingIndicator.classList.add('hidden');
+                summaryOutput.classList.remove('hidden');
+            });
+        });
+    </script>
+
+</body>
+</html>
